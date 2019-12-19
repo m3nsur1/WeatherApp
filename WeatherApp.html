@@ -176,7 +176,7 @@
 
                     JQ.getJSON("http://api.openweathermap.org/data/2.5/weather?q=" + city + "&units=metric&" + "appid=" + appId, function(response) {
 
-                   // 
+                   
                    JQ(weatherDescP).text("Opis vremena: " + response.weather[0]['description']);
                     var weatherCode = response.weather[0].icon;
                     var weatherIconUrl = "http://openweathermap.org/img/w/" + weatherCode + ".png";
