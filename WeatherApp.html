@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Project Weather App</title>
+    <style>
+
+        body {
+            width: 1200px;
+            height: 800px;
+            text-align: center;
+            position: relative;
+        }
+       
+        #main {
+         
+            width: 60%;
+            height: auto;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        h1 {
+            height: 100px;
+        }
+
+        #cityInput {
+            margin-bottom: 30px;
+            width : 150px;
+            height: 20px;
+            box-sizing: border-box;
+            border: 1px solid black;
+            border-radius: 10px;
+            border-color: #00FFFF;
+            padding-left: 5px;
+
+        }
+
+        #getWeatherBtn {
+            margin-bottom: 25px;
+            margin-left: 50px;
+        }
+
+        .btnOnLoad {        
+            border: 1px solid black;    
+            border-radius: 10px;
+        }
+
+        .btnHover {
+            border: 2px solid #00FFFF;
+        }
+
+        #weatherDataTable {
+            border: 2px solid #20B2AA;
+            padding: 10px;
+            color: #505050;
+           
+        }
+        
+        .thStyle {
+            font-weight: normal;
+            border-right: 1px solid grey;
+            padding-right: 10px;
+        }
+
+        tr {
+            margin-top: 15px;
+        }
+
+         td {
+            border-top: 1px solid black;           
+            
+        }
+
+        .checkForecast {
+            margin: 0 10px 20px 10px;
+            
+        }
+
+        p {display:inline;}
+
+    </style>
+    <script
+  src="https://code.jquery.com/jquery-3.4.1.js"
+  integrity="sha256-WpOohJOqMqqyKL9FccASB9O0KwACQJpFTUBLTYOVvVU="
+  crossorigin="anonymous"></script>
+</head>
+<body>
+    
+    <script>
+    var JQ = jQuery.noConflict();
+  
+    JQ(document).ready(function() {
+    
+        // creating elements
+        var weatherParams = ['Temperatura', 'Pritisak', 'Vlažnost', 'Min. temp.', 'Max. temp', 'Vidljivost', 'Brzina vjetra', 'Oblaci', 'Izlazak sunca', 'Zalazak sunca'];
+        var main = JQ('<div id="main"></div>');
+        var heading = JQ('<h1>Weather app</h1>');    
+        var weatherDescP = JQ('<p id="weatherDesc"></p>');
+        var weatherImg = JQ('<img id="weatherDesc">');        
+        var form = JQ('<form id="weatherForm"></form>');
+        JQ(form).append('<div>Unesi grad za vremensku prognozu: <input type="text" placeholder="unesite grad" id="cityInput"></div>');
+        JQ(form).append('<div><input type="submit" value="Prikazi prognozu" class="btnOnLoad" id="getWeatherBtn"></div>');
+        JQ(form).append('<input type="radio" id="forecastRadio1" checked="true" name="forecastRadio" class="checkForecast">Trenutno');
+        JQ(form).append('<input type="radio" id="forecastRadio2" name="forecastRadio" class="checkForecast">Pet dana');
+        var dataTable = JQ('<table id="weatherDataTable"></table>');
+        var thead = JQ('<thead id="dataThead"></thead>');
+        var tbody = JQ('<tbody id="dataTbody"></tbody>');
+        var tr1 = JQ('<tr id="firstRow"></tr>');
+        var thDate = JQ('<th class="thStyle">Datum</th>');
+        JQ(thead).append(thDate);
+        
+        for (var i = 0; i < 10; i++) {
+            var thCell = JQ('<th class="thStyle">' + weatherParams[i] + '</th>');
+            JQ(thead).append(thCell);
+        }
+        JQ(dataTable).append(thead);
+        JQ(main).append(heading);
+        JQ(main).append(form);            
+        JQ(main).append(dataTable);
+        JQ(document.body).append(main);        
+    
+        var cityName = JQ('#cityInput').text();
+        var appId = "4539cf3b856555fc7a95b6865c021072";
+
+        // handling form events
+
+        JQ("#getWeatherBtn").on("click", function(e) {
+            e.preventDefault();
+            JQ(tr1).empty();
+            JQ(tbody).empty();
+            JQ(weatherDescP).empty();
+            JQ(weatherImg).attr("src", "");
+            var cityName = JQ('#cityInput').val();
+            getForecast(cityName);
+        });
+
+        JQ("#getWeatherBtn").on("mouseover", function() {
+            JQ(this).addClass("btnHover");
+        });
+
+        JQ("#getWeatherBtn").on("mouseout", function() {
+            JQ(this).removeClass("btnHover");
+        });
+        
+        // weather forecast function
+        
+        function getForecast(city) {           
+
+                var today = new Date().toLocaleDateString();
+                var responseData = [];
+                
+                function getTomorrowDate(n)  {
+                    const today = new Date().toLocaleDateString();
+                    const tomorrow = new Date(today)
+                    if (parseInt(n) == 0) {
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        return tomorrow.toLocaleDateString();
+                    }
+                    else {
+                    tomorrow.setDate(tomorrow.getDate() + n)
+                    return tomorrow.toLocaleDateString();
+                    }
+                }
+                                            
+                function getTime(timestamp) {
+                    var hours = new Date(timestamp * 1000).getHours();
+                    var minutes = new Date(timestamp).getMinutes();
+                    return [hours,minutes];
+                }
+               
+                // check if current forecast is checked, if it's checked give current forecast
+                if (city !== " " && JQ("#forecastRadio1").is(":checked")) {                   
+
+                    JQ.getJSON("http://api.openweathermap.org/data/2.5/weather?q=" + city + "&units=metric&" + "appid=" + appId, function(response) {
+
+                   // 
+                   JQ(weatherDescP).text("Opis vremena: " + response.weather[0]['description']);
+                    var weatherCode = response.weather[0].icon;
+                    var weatherIconUrl = "http://openweathermap.org/img/w/" + weatherCode + ".png";
+
+                    responseData = [today, response.main['temp'], response.main['pressure'], response.main['humidity'], response.main['temp_min'], response.main['temp_max'], response.visibility, response.wind['speed'], response.clouds['all'], getTime(response.sys['sunrise']), getTime(response.sys['sunset'])];
+
+                    for (var i = 0; i < 11; i++) {
+                        var tdParamData = JQ('<td>' + responseData[i] + '</td>');
+                        JQ(tr1).append(tdParamData);
+                        
+                    }
+                    JQ(tbody).append(tr1);
+                    JQ(dataTable).append(tbody);   
+                    JQ(weatherImg).attr("src", weatherIconUrl);   
+                    JQ(document.body).append(weatherDescP);
+                    JQ(document.body).append(weatherImg);
+                                
+            });
+        }
+        
+             // forecast for five days. Visibility and sunrise/sunset values are not present in json file for five-day forecast.
+
+            if (city !== " " && JQ("#forecastRadio2").is(":checked")) 
+            {
+                
+                JQ.getJSON("http://api.openweathermap.org/data/2.5/forecast?q=" + city + "&units=metric&" + "appid=" + appId, function(response) {
+
+                for (var i = 6; i < response.list.length; i += 8) {
+
+                    var day = i/7;
+                    var trForecast = JQ("<tr></tr>");                  
+                    //populating table cells with five days values  
+                    var tomorrowDateCell = JQ("<td>" + getTomorrowDate(day) + "</td>");
+                    trForecast.append(tomorrowDateCell);
+                    var tempCell = JQ("<td>" + response.list[i].main['temp'] + "°C</td>");
+                    trForecast.append(tempCell);
+                    var pressureCell = JQ("<td>" + response.list[i].main['pressure'] + "hPa</td>");
+                    trForecast.append(pressureCell);
+                    var humidityCell = JQ("<td>" + response.list[i].main['humidity'] + "%</td>");
+                    trForecast.append(humidityCell);
+                    var minTempCell = JQ("<td>" + response.list[i].main['temp_min'] + "°C</td>");
+                    trForecast.append(minTempCell); 
+                    var maxTempCell = JQ("<td>" + response.list[i].main['temp_max'] + "°C</td>");
+                    trForecast.append(maxTempCell); 
+                    var visibilityCell  = JQ("<td>" + response.list[i].main['visibility'] + "</td>");  
+                    trForecast.append(visibilityCell);
+                    var windSpeedCell = JQ("<td>" + response.list[i].wind['speed'] + "m/s</td>");
+                    trForecast.append(windSpeedCell); 
+                    var cloudsCell = JQ("<td>" + response.list[i].clouds['all'] + "</td>");
+                    trForecast.append(cloudsCell); 
+                    var sunriseCell = JQ("<td>" + getTime(response.list[i].sys['sunrise']) + "</td>");
+
+                   // sunrise and sunset values are not present in five-day forecast data
+                   if (isNaN(sunriseCell)) {trForecast.append("");}
+                   else {trForecast.append(sunriseCell);}
+                   var sunsetCell = JQ("<td>" + getTime(response.list[i].sys['sunset']) + "</td>");
+                   if (isNaN(sunsetCell)) {trForecast.append("");}
+                   else {trForecast.append(sunsetCell);}
+
+                   JQ(tbody).append(trForecast);                 
+                   JQ(dataTable).append(tbody);
+                   
+                  }
+                              
+                
+            });
+        }
+    }   
+
+    });
+
+    </script>
+</body>
+</html>
